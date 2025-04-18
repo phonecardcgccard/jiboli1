@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>吉卜力梦境 - AI风格转换工具</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Sans+SC:wght@400;500;700&display=swap');
+        
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #f9f7f0;
+            color: #333;
+        }
+        
+        .title-font {
+            font-family: 'Ma Shan Zheng', cursive;
+        }
+        
+        .ghibli-bg {
+            background: linear-gradient(135deg, #a8e6cf 0%, #dcedc1 50%, #ffd3b6 100%);
+        }
+        
+        .ghibli-card {
+            background-color: rgba(255, 255, 255, 0.85);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .ghibli-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        }
+        
+        .ghibli-btn {
+            background: linear-gradient(135deg, #ffaaa5 0%, #ff8b94 100%);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 12px 24px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .ghibli-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 138, 148, 0.4);
+        }
+        
+        .ghibli-input {
+            border: 2px solid #dcedc1;
+            border-radius: 8px;
+            padding: 12px 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .ghibli-input:focus {
+            outline: none;
+            border-color: #a8e6cf;
+            box-shadow: 0 0 0 3px rgba(168, 230, 207, 0.3);
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #ff8b94;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .image-container {
+            position: relative;
+            overflow: hidden;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .image-container img {
+            transition: transform 0.5s ease;
+        }
+        
+        .image-container:hover img {
+            transform: scale(1.03);
+        }
+        
+        .image-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 100%);
+            color: white;
+            padding: 20px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .image-container:hover .image-overlay {
+            opacity: 1;
+        }
+        
+        .tab-button {
+            position: relative;
+            padding: 12px 24px;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.3s ease;
+        }
+        
+        .tab-button.active {
+            color: #ff8b94;
+        }
+        
+        .tab-button.active:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60%;
+            height: 3px;
+            background: linear-gradient(135deg, #ffaaa5 0%, #ff8b94 100%);
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- 导航栏 -->
+    <nav class="ghibli-bg py-4 shadow-md">
+        <div class="container mx-auto px-4 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fas fa-paint-brush text-3xl text-white"></i>
+                <h1 class="title-font text-3xl text-white">吉卜力梦境</h1>
+            </div>
+            <div class="hidden md:flex space-x-6">
+                <a href="#" class="text-white hover:text-yellow-100 transition">首页</a>
+                <a href="#" class="text-white hover:text-yellow-100 transition">创作</a>
+                <a href="#" class="text-white hover:text-yellow-100 transition">画廊</a>
+                <a href="#" class="text-white hover:text-yellow-100 transition">教程</a>
+                <a href="#" class="text-white hover:text-yellow-100 transition">关于</a>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button class="ghibli-btn hidden md:block">开始创作</button>
+                <button class="md:hidden text-white text-2xl">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 英雄区域 -->
+    <section class="ghibli-bg py-16 md:py-24">
+        <div class="container mx-auto px-4 flex flex-col md:flex-row items-center">
+            <div class="md:w-1/2 mb-10 md:mb-0">
+                <h2 class="title-font text-4xl md:text-5xl lg:text-6xl text-gray-800 mb-6">创造你的吉卜力世界</h2>
+                <p class="text-lg md:text-xl text-gray-700 mb-8">使用我们的AI技术，将你的文字描述或照片转换成宫崎骏动画般的梦幻场景，体验吉卜力工作室的独特艺术风格。</p>
+                <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+                    <button class="ghibli-btn flex items-center justify-center">
+                        <i class="fas fa-magic mr-2"></i> 立即尝试
+                    </button>
+                    <button class="bg-white text-gray-800 px-6 py-3 rounded-full font-medium shadow-md hover:shadow-lg transition">
+                        <i class="fas fa-images mr-2"></i> 浏览作品
+                    </button>
+                </div>
+            </div>
+            <div class="md:w-1/2 flex justify-center">
+                <div class="relative w-full max-w-md">
+                    <div class="absolute -top-6 -left-6 w-32 h-32 bg-yellow-100 rounded-full opacity-70"></div>
+                    <div class="absolute -bottom-6 -right-6 w-40 h-40 bg-blue-100 rounded-full opacity-70"></div>
+                    <div class="ghibli-card p-2 relative">
+                        <div class="image-container aspect-square">
+                            <img src="https://images.unsplash.com/photo-1605000797499-95a51c5269ae?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80" 
+                                 alt="吉卜力风格示例" class="w-full h-full object-cover rounded-lg">
+                            <div class="image-overlay">
+                                <h3 class="font-bold text-lg">乡村小屋</h3>
+                                <p class="text-sm">"宁静的乡村小屋，周围是绿色的田野"</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 创作工具区域 -->
+    <section class="py-16 bg-white">
+        <div class="container mx-auto px-4">
+            <h2 class="title-font text-3xl md:text-4xl text-center text-gray-800 mb-12">创作你的吉卜力风格作品</h2>
+            
+            <div class="max-w-4xl mx-auto ghibli-card p-6">
+                <div class="flex border-b mb-6">
+                    <button class="tab-button active">文字生成</button>
+                    <button class="tab-button">图片转换</button>
+                    <button class="tab-button">风格融合</button>
+                </div>
+                
+                <div class="mb-6">
+                    <label for="prompt" class="block text-lg font-medium text-gray-700 mb-2">描述你想创作的场景</label>
+                    <textarea id="prompt" rows="4" class="ghibli-input w-full" placeholder="例如：一座漂浮在云端的城堡，周围有飞行的鲸鱼和彩色的热气球..."></textarea>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div>
+                        <label class="block text-lg font-medium text-gray-700 mb-2">选择吉卜力风格</label>
+                        <select class="ghibli-input w-full">
+                            <option>《千与千寻》风格</option>
+                            <option>《龙猫》风格</option>
+                            <option>《哈尔的移动城堡》风格</option>
+                            <option>《天空之城》风格</option>
+                            <option>《魔女宅急便》风格</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-lg font-medium text-gray-700 mb-2">艺术风格强度</label>
+                        <input type="range" min="0" max="100" value="70" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                    </div>
+                </div>
+                
+                <div class="flex justify-center">
+                    <button id="generateBtn" class="ghibli-btn px-8 py-3 text-lg flex items-center">
+                        <i class="fas fa-sparkles mr-2"></i> 生成吉卜力风格作品
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 加载状态 -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white p-8 rounded-xl max-w-md w-full text-center">
+            <div class="flex justify-center mb-4">
+                <div class="loading-spinner"></div>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2">正在创作你的吉卜力世界...</h3>
+            <p class="text-gray-600">AI正在根据你的描述生成作品，这通常需要20-40秒</p>
+            <div class="mt-4 text-sm text-gray-500">
+                <p>提示：更详细的描述通常会产生更好的结果</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 结果展示 -->
+    <section id="resultSection" class="py-16 bg-gray-50 hidden">
+        <div class="container mx-auto px-4">
+            <h2 class="title-font text-3xl md:text-4xl text-center text-gray-800 mb-12">你的吉卜力风格作品</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                <div class="ghibli-card p-4">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">原始描述</h3>
+                    <p id="originalPrompt" class="text-gray-700 mb-4"></p>
+                    <div class="flex items-center text-sm text-gray-500">
+                        <i class="fas fa-clock mr-1"></i>
+                        <span id="generationTime"></span>
+                    </div>
+                </div>
+                <div class="ghibli-card overflow-hidden">
+                    <div class="image-container aspect-square">
+                        <img id="generatedImage" src="" alt="生成的吉卜力风格作品" class="w-full h-full object-cover">
+                        <div class="image-overlay">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <h3 id="imageTitle" class="font-bold text-lg"></h3>
+                                    <p id="imageStyle" class="text-sm"></p>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <button class="bg-white text-pink-500 p-2 rounded-full hover:bg-pink-50 transition">
+                                        <i class="fas fa-download"></i>
+                                    </button>
+                                    <button class="bg-white text-pink-500 p-2 rounded-full hover:bg-pink-50 transition">
+                                        <i class="fas fa-share-alt"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-12 text-center">
+                <button class="ghibli-btn px-8 py-3 text-lg">
+                    <i class="fas fa-redo mr-2"></i> 重新生成
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- 作品展示 -->
+    <section class="py-16 bg-white">
+        <div class="container mx-auto px-4">
+            <h2 class="title-font text-3xl md:text-4xl text-center text-gray-800 mb-12">社区精选作品</h2>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- 作品1 -->
+                <div class="ghibli-card overflow-hidden">
+                    <div class="image-container aspect-square">
+                        <img src="https://images.unsplash.com/photo-1605000797499-95a51c5269ae?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80" 
+                             alt="吉卜力风格作品" class="w-full h-full object-cover">
+                        <div class="image-overlay">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <h3 class="font-bold text-lg">魔法森林</h3>
+                                    <p class="text-sm">《龙猫》风格</p>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <button class="bg-white text-pink-500 p-2 rounded-full hover:bg-pink-50 transition">
+                                        <i class="fas fa-heart"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 作品2 -->
+                <div class="ghibli-card overflow-hidden">
+                    <div class="image-container aspect-square">
+                        <img src="https://images.unsplash.com/photo-1518562180175-0c3d96e08992?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80" 
+                             alt="吉卜力风格作品" class="w-full h-full object-cover">
+                        <div class="image-overlay">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <h3 class="font-bold text-lg">天空之城</h3>
+                                    <p class="text-sm">《天空之城》风格</p>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <button class="bg-white text-pink-500 p-2 rounded-full hover:bg-pink-50 transition">
+                                        <i class="fas fa-heart"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 作品3 -->
+                <div class="ghibli-card overflow-hidden">
+                    <div class="image-container aspect-square">
+                        <img src="https://images.unsplash.com/photo-1518562180175-0c3d96e08992?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80" 
+                             alt="吉卜力风格作品" class="w-full h-full object-cover">
+                        <div class="image-overlay">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <h3 class="font-bold text-lg">海边小镇</h3>
+                                    <p class="text-sm">《魔女宅急便》风格</p>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <button class="bg-white text-pink-500 p-2 rounded-full hover:bg-pink-50 transition">
+                                        <i class="fas fa-heart"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-12 text-center">
+                <button class="border-2 border-pink-500 text-pink-500 px-6 py-2 rounded-full font-medium hover:bg-pink-50 transition">
+                    浏览更多作品 <i class="fas fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- 页脚 -->
+    <footer class="bg-gray-800 text-white py-12">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <h3 class="title-font text-2xl mb-4">吉卜力梦境</h3>
+                    <p class="text-gray-400">用AI技术带你进入宫崎骏的梦幻世界，创造属于你的吉卜力风格艺术作品。</p>
+                </div>
+                <div>
+                    <h4 class="font-bold text-lg mb-4">快速链接</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">首页</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">创作工具</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">作品画廊</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">使用教程</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold text-lg mb-4">帮助中心</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">常见问题</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">使用条款</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">隐私政策</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">联系我们</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold text-lg mb-4">关注我们</h4>
+                    <div class="flex space-x-4 mb-4">
+                        <a href="#" class="bg-gray-700 w-10 h-10 rounded-full flex items-center justify-center hover:bg-pink-500 transition">
+                            <i class="fab fa-weibo"></i>
+                        </a>
+                        <a href="#" class="bg-gray-700 w-10 h-10 rounded-full flex items-center justify-center hover:bg-pink-500 transition">
+                            <i class="fab fa-weixin"></i>
+                        </a>
+                        <a href="#" class="bg-gray-700 w-10 h-10 rounded-full flex items-center justify-center hover:bg-pink-500 transition">
+                            <i class="fab fa-bilibili"></i>
+                        </a>
+                        <a href="#" class="bg-gray-700 w-10 h-10 rounded-full flex items-center justify-center hover:bg-pink-500 transition">
+                            <i class="fab fa-xiaohongshu"></i>
+                        </a>
+                    </div>
+                    <p class="text-gray-400">订阅我们的新闻通讯</p>
+                    <div class="mt-2 flex">
+                        <input type="email" placeholder="你的邮箱" class="px-4 py-2 rounded-l-full focus:outline-none text-gray-800 w-full">
+                        <button class="bg-pink-500 px-4 py-2 rounded-r-full hover:bg-pink-600 transition">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-8 pt-8 text-center text-gray-400">
+                <p>© 2023 吉卜力梦境 - 所有权利保留</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // 模拟生成过程
+        document.getElementById('generateBtn').addEventListener('click', function() {
+            const prompt = document.getElementById('prompt').value;
+            if (!prompt.trim()) {
+                alert('请输入描述内容');
+                return;
+            }
+            
+            // 显示加载状态
+            document.getElementById('loadingOverlay').classList.remove('hidden');
+            
+            // 模拟API调用延迟
+            setTimeout(function() {
+                // 隐藏加载状态
+                document.getElementById('loadingOverlay').classList.add('hidden');
+                
+                // 显示结果
+                document.getElementById('originalPrompt').textContent = prompt;
+                document.getElementById('imageTitle').textContent = prompt.substring(0, 20) + (prompt.length > 20 ? '...' : '');
+                document.getElementById('imageStyle').textContent = '《千与千寻》风格';
+                
+                // 设置随机生成时间
+                const time = Math.floor(Math.random() * 20) + 20;
+                document.getElementById('generationTime').textContent = `生成时间: ${time}秒`;
+                
+                // 使用随机图片作为生成结果
+                const randomImage = [
+                    'https://images.unsplash.com/photo-1605000797499-95a51c5269ae',
+                    'https://images.unsplash.com/photo-1518562180175-0c3d96e08992',
+                    'https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0'
+                ][Math.floor(Math.random() * 3)];
+                document.getElementById('generatedImage').src = randomImage + '?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80';
+                
+                // 显示结果区域
+                document.getElementById('resultSection').classList.remove('hidden');
+                
+                // 滚动到结果区域
+                document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth' });
+            }, 3000);
+        });
+        
+        // 标签切换功能
+        const tabButtons = document.querySelectorAll('.tab-button');
+        tabButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+        
+        // 移动端菜单切换
+        document.querySelector('nav button').addEventListener('click', function() {
+            const menu = document.querySelector('nav .hidden');
+            if (menu) {
+                menu.classList.toggle('hidden');
+                menu.classList.toggle('flex');
+                menu.classList.toggle('flex-col');
+                menu.classList.toggle('absolute');
+                menu.classList.toggle('top-16');
+                menu.classList.toggle('left-0');
+                menu.classList.toggle('right-0');
+                menu.classList.toggle('bg-indigo-500');
+                menu.classList.toggle('p-4');
+                menu.classList.toggle('space-y-4');
+                menu.classList.toggle('shadow-md');
+            }
+        });
+    </script>
+</body>
+</html>
